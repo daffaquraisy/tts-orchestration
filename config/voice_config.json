@@ -1,0 +1,32 @@
+{
+  "rules": [
+    {
+      "condition": "contains_question",
+      "voice_id": "en+m3",
+      "rate": 145,
+      "volume": 0.9,
+      "pitch": 5
+    },
+    {
+      "condition": "is_exclamatory",
+      "voice_id": "en+f5",
+      "rate": 170,
+      "volume": 1.0,
+      "pitch": 10
+    },
+    {
+      "condition": "is_formal",
+      "voice_id": "en+f3",
+      "rate": 100,
+      "volume": 0.85,
+      "pitch": 0
+    }
+  ],
+  "default_rule": {
+    "condition": "default",
+    "voice_id": "en",
+    "rate": 150,
+    "volume": 0.9,
+    "pitch": 0
+  }
+}
