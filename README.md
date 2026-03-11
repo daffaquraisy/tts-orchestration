@@ -26,14 +26,14 @@ I confirm that this submission was completed without the assistance of any AI-ba
 
 ## Architecture
 
-The full architecture diagram (component topology, request lifecycle, step-by-step pipeline) is in [`../index.html`](../index.html). Open it in a browser.
+The full architecture diagram (component topology, request lifecycle, step-by-step pipeline) is in [`./index.html`](./index.html). Open it in a browser.
 
 Three diagrams are included:
 - **System Overview** — component boundaries and data flow
 - **Request Flow** — async sequence from POST to audio file
 - **Step-by-Step** — detailed pipeline breakdown
 
-The TDD and pseudocode that drove implementation is in [`../tts_tdd_pseudocode.md`](../tts_tdd_pseudocode.md).
+The TDD and pseudocode that drove implementation is in [`./tts_tdd_pseudocode.md`](./tts_tdd_pseudocode.md).
 
 ---
 
