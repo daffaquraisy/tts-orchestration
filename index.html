@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TTS Orchestration Architecture</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #ffffff;
+      color: #1a1a1a;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 48px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .doc-header {
+      border-bottom: 2px solid #1a1a1a;
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+
+    .doc-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .doc-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: -0.02em;
+    }
+
+    .doc-subtitle {
+      font-size: 12px;
+      color: #555;
+      margin-top: 4px;
+    }
+
+    .doc-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-top: 12px;
+      font-size: 11px;
+      color: #888;
+    }
+
+    .doc-meta span::before {
+      content: '— ';
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #888;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 6px;
+      margin-bottom: 20px;
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #1a1a1a;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 8px 20px;
+      cursor: pointer;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: transparent;
+      color: #888;
+      margin-bottom: -1px;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+    }
+
+    .tab:hover {
+      color: #1a1a1a;
+    }
+
+    .tab.active {
+      color: #1a1a1a;
+      border-bottom: 2px solid #1a1a1a;
+      font-weight: 700;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .diagram-wrap {
+      border: 1px solid #e0e0e0;
+      padding: 32px 24px;
+      overflow-x: auto;
+    }
+
+    .diagram-caption {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    .step-list {
+      border: 1px solid #e0e0e0;
+    }
+
+    .step-row {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .step-row:last-child {
+      border-bottom: none;
+    }
+
+    .step-n {
+      font-size: 10px;
+      font-weight: 700;
+      color: #aaa;
+      padding: 14px 0 14px 14px;
+      border-right: 1px solid #e0e0e0;
+    }
+
+    .step-body {
+      padding: 14px 16px;
+    }
+
+    .step-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 2px;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .doc-footer {
+      border-top: 1px solid #e0e0e0;
+      padding-top: 16px;
+      margin-top: 40px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #aaa;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="doc-header">
+    <div class="doc-label">Architecture Document</div>
+    <div class="doc-title">Dynamic TTS Orchestration Service</div>
+    <div class="doc-subtitle">AI Engineer / Backend Engineer Take-Home</div>
+    <div class="doc-meta">
+      <span>FastAPI + pyttsx3</span>
+      <span>Redis + RQ</span>
+      <span>Python 3.13 + uv</span>
+      <span>Pydantic v2</span>
+      <span>Docker Compose</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Diagrams</div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('system', this)">System Overview</button>
+      <button class="tab" onclick="switchTab('request', this)">Request Flow</button>
+      <button class="tab" onclick="switchTab('flow', this)">Step-by-Step</button>
+    </div>
+
+    <div class="panel active" id="panel-system">
+      <div class="diagram-wrap">
+        <div class="mermaid">
+          graph TB
+          subgraph CLIENT[CLIENT]
+          CL[HTTP Client]
+          end
+          subgraph API[FASTAPI SERVICE :8000]
+          EP1[POST /synthesize]
+          EP2[GET /status/job_id]
+          EP3[POST /reload-config]
+          CFG[Config Loader - voice_config.json]
+          EP1 --- CFG
+          EP3 --- CFG
+          end
+          subgraph QUEUE[REDIS :6379]
+          RQ[RQ Job Queue]
+          STORE[Job State Store]
+          end
+          subgraph WORKER[RQ WORKER]
+          ANA[Text Analyzer]
+          RTR[Voice Router]
+          SYN[pyttsx3 Synthesizer]
+          ANA --> RTR --> SYN
+          end
+          subgraph FS[FILESYSTEM]
+          AUDIO[Audio Output /tmp/*.wav]
+          end
+          CL -->|POST text| EP1
+          CL -->|GET job_id| EP2
+          CL -->|POST| EP3
+          EP1 -->|enqueue| RQ
+          EP1 -->|write queued| STORE
+          EP2 -->|read status| STORE
+          RQ -->|dequeue| WORKER
+          SYN -->|write .wav| AUDIO
+          WORKER -->|write done/failed| STORE
+        </div>
+      </div>
+      <div class="diagram-caption">fig.1 full component topology</div>
+    </div>
+
+    <div class="panel" id="panel-request">
+      <div class="diagram-wrap">
+        <div class="mermaid">
+          sequenceDiagram
+          actor Client
+          participant API as FastAPI :8000
+          participant Redis as Redis
+          participant Worker as RQ Worker
+          participant FS as Filesystem
+          Client->>API: POST /synthesize
+          API->>API: Pydantic validate
+          API->>Redis: write status=queued
+          API->>Redis: enqueue job payload
+          API-->>Client: 202 job_id
+          Note over Redis,Worker: &nbsp;&nbsp;&nbsp;async non-blocking&nbsp;&nbsp;&nbsp;
+          Worker->>Redis: dequeue job
+          Worker->>Redis: write status=processing
+          Worker->>Worker: analyze_text
+          Worker->>Worker: route_voice
+          Worker->>Worker: synthesize .wav
+          Worker->>FS: write audio file
+          alt success
+          Worker->>Redis: write status=done + audio_path
+          Client->>API: GET /status/job_id
+          API->>Redis: read job
+          API-->>Client: 200 status=done + audio_path
+          else failed
+          Worker->>Redis: write status=failed + error
+          Client->>API: GET /status/job_id
+          API-->>Client: 200 status=failed + error
+          end
+        </div>
+      </div>
+      <div class="diagram-caption">fig.2 async request lifecycle</div>
+    </div>
+
+    <div class="panel" id="panel-flow">
+      <div class="step-list">
+        <div class="step-row">
+          <div class="step-n">01</div>
+          <div class="step-body">
+            <div class="step-title">POST /synthesize</div>
+            <div class="step-desc">Client sends text payload. Pydantic validates SynthesisRequest. Empty text returns
+              422 before hitting business logic.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">02</div>
+          <div class="step-body">
+            <div class="step-title">Enqueue to Redis</div>
+            <div class="step-desc">uuid4 job_id generated. Status written to Redis as queued. Job payload pushed to RQ
+              queue. API returns 202 immediately non-blocking.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">03</div>
+          <div class="step-body">
+            <div class="step-title">Worker dequeues</div>
+            <div class="step-desc">RQ worker picks up job from Redis. Updates status to processing. Runs in a separate
+              container process.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">04</div>
+          <div class="step-body">
+            <div class="step-title">Text analysis</div>
+            <div class="step-desc">Rule-based checks: presence of ?, !, formal keywords (dear, formally, sincerely).
+              Computes word count and avg sentence length. Returns TextAnalysis model.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">05</div>
+          <div class="step-body">
+            <div class="step-title">Voice routing</div>
+            <div class="step-desc">Iterates rules in JSON order first match wins. Falls back to default_rule if no
+              condition matches. Returns VoiceRule with voice_id, rate, volume, pitch.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">06</div>
+          <div class="step-body">
+            <div class="step-title">pyttsx3 synthesis</div>
+            <div class="step-desc">Applies rate, volume, voice to engine. Calls save_to_file to /tmp/job_id.wav. Cleans
+              up partial file on failure and raises SynthesisError.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">07</div>
+          <div class="step-body">
+            <div class="step-title">Write final status</div>
+            <div class="step-desc">On success: status=done, audio_path written to Redis. On failure: status=failed,
+              error message written.</div>
+          </div>
+        </div>
+        <div class="step-row">
+          <div class="step-n">08</div>
+          <div class="step-body">
+            <div class="step-title">Client polls GET /status/job_id</div>
+            <div class="step-desc">API reads from Redis and returns SynthesisJob. Unknown job_id returns 404.</div>
+          </div>
+        </div>
+      </div>
+      <div class="diagram-caption" style="margin-top:8px">fig.3 processing pipeline breakdown</div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <span>tts-orchestration-service / architecture</span>
+    <span>FastAPI + pyttsx3 + Redis RQ + Docker</span>
+  </div>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'neutral',
+      themeVariables: {
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '12px',
+      },
+      flowchart: { curve: 'basis' },
+    });
+
+    document.fonts.ready.then(() => {
+      mermaid.run({
+        querySelector: '.active .mermaid'
+      });
+    });
+
+    function switchTab(name, el) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+      el.classList.add('active');
+      document.getElementById('panel-' + name).classList.add('active');
+
+      mermaid.run({
+        querySelector: '#panel-' + name + ' .mermaid'
+      });
+    }
+  </script>
+</body>
+
+</html>
